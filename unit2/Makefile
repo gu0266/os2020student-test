@@ -7,7 +7,7 @@ test2.1:	checkpoint2.1.bin
 	xmega65 -kickup checkpoint2.1.bin
 
 checkpoint2.2.bin:	checkpoint2.2.kc
-	${HOME}/OS2019StudentMaterial/kickc/bin/kickc.sh -a $<
+	${HOME}/OSStudentMaterial/kickc/bin/kickc.sh -a $<
 
 test2.2:	checkpoint2.2.bin
 	xmega65 -kickup checkpoint2.2.bin
