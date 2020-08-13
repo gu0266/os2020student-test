@@ -16,7 +16,7 @@ const char BLACK = 0;
 const char WHITE = 1;
 
 // Some text to display
-char[] MESSAGE = "may i get marks for checkpoint 2?";
+char[] MESSAGE = "may i get marks for checkpoint 2.5 ?";
 
 void main()
 {
@@ -26,24 +26,103 @@ void RESET()
 {
     // Initialize screen memory, and select correct font
     *VIC_MEMORY = 0x14;
+    // Fill the screen with spaces
+    memset(SCREEN, ' ', 40 * 25);
+    // Set the colour of every character on the screen to white
+    memset(COLS, WHITE, 40 * 25);
+
+    // Print the "FAN" message
+    char *sc = SCREEN + 40; // Display it one line down on the screen
+    char *msg = MESSAGE;    // The messag to display
+    char *sc2 = SCREEN;
+
+    int x = 20, y = 13;
+    char[] colors = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+    char r_color = colors[1] - 1;
+
+    // A simple copy routine to copy the string
+    while (*msg)
+    {
+        *sc++ = *msg++;
+        my_sleep(100000);
+    }
+
     while (true)
     {
-        // Fill the screen with spaces
-        memset(SCREEN, ' ', 40 * 25);
-        // Set the colour of every character on the screen to white
-        memset(COLS, 3, 40 * 2); // the second line
-        // Print the "FAN" message
-        char *sc = SCREEN + 40; // Display it one line down on the screen
-        char *msg = MESSAGE;    // The messag to display
-        // A simple copy routine to copy the string
-        while (*msg)
+        for (int k = 1; k < 14; k++)
         {
-            *sc++ = *msg++;
-            my_sleep(1000000);
-        }
 
+
+            r_color++;
+
+            sc = SCREEN + 40;
+            msg = MESSAGE;
+            while (*msg)
+            {
+                *sc++ = *msg++;
+                memset(COLS, r_color, 40 * 2);
+            }
+
+            *(SCREEN + ((y - 1) * 40 + x - 1)) = $10;
+            *(COLS + ((y - 1) * 40 + x - 1)) = r_color;
+            for (int j = 0; j < 500; j++)
+            {
+                sc2 = SCREEN;
+                for (int i = 0; i < 25; i++)
+                {
+                    sc2 = sc2 + 40;
+                }
+            }
+
+            *(SCREEN + ((y - 2) * 40 + x - 2)) = $53;
+            *(COLS + ((y - 2) * 40 + x - 2)) = r_color;
+            for (int j = 0; j < 500; j++)
+            {
+                sc2 = SCREEN;
+
+                for (int i = 0; i < 25; i++)
+                {
+                    sc2 = sc2 + 40;
+                }
+            }
+
+            *(SCREEN + ((y - 2) * 40 + x)) = $53;
+            *(COLS + ((y - 2) * 40 + x)) = r_color;
+            for (int j = 0; j < 500; j++)
+            {
+                sc2 = SCREEN;
+
+                for (int i = 0; i < 25; i++)
+                {
+                    sc2 = sc2 + 40;
+                }
+            }
+
+            *(SCREEN + (y * 40 + x)) = $53;
+            *(COLS + (y * 40 + x)) = r_color;
+            for (int j = 0; j < 500; j++)
+            {
+                sc2 = SCREEN;
+
+                for (int i = 0; i < 25; i++)
+                {
+                    sc2 = sc2 + 40;
+                }
+            }
+
+            *(SCREEN + (y * 40 + x - 2)) = $53;
+            *(COLS + (y * 40 + x - 2)) = r_color;
+            for (int j = 0; j < 500; j++)
+            {
+                sc2 = SCREEN;
+
+                for (int i = 0; i < 25; i++)
+                {
+                    sc2 = sc2 + 40;
+                }
+            }
+        }
     }
-    exit_hypervisor();
 }
 
 void my_sleep(unsigned long time)
