@@ -1,0 +1,28 @@
+/**
+ *  Tells the MEGA65 to allow system calls to be made
+ */
+void enable_syscalls()
+{
+  *(unsigned char *)$D02F = $47;
+  *(unsigned char *)$D02F = $53;
+}
+
+/**
+ * Triggers SYSCALL $00
+ */
+void call_syscall00()
+{
+  enable_syscalls();
+  *(unsigned char *)$D640 = $00;
+  asm { nop }
+}
+
+/**
+ * Triggers SYSCALL $00
+ */
+void call_syscall01()
+{
+  enable_syscalls();
+  *(unsigned char *)$D641 = $01;
+  asm { nop }
+}

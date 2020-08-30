@@ -1,0 +1,12 @@
+import "myabi"
+
+ /**
+ *  Test program that calls your API
+ */
+    void main()
+{
+  call_syscall00();
+  call_syscall01();
+  while (true)
+    continue;
+}
