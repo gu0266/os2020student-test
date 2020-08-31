@@ -53,3 +53,33 @@ void print_string(char *string)
   *(unsigned char *)$D642 = $0;
   asm {nop }
 }
+
+// --------------- Checkpoint 4.5 ----------------
+// declare a variable for buffer, then return this variable as the return value of "get_os_version" function
+char[256] os_version_return;
+
+/**
+ * API function returns the operating system version as a string
+ */
+char *get_os_version()
+{
+  // type-cast the address to (char *) to effect the string copy
+  char *str = os_version_return;
+  // operating system receive copy the string to a transfer area (use $0300 – $03FF again)
+  volatile unsigned char *ms = (unsigned char *)$0330;
+  // string copy
+  while (*ms)
+  {
+    *str = *ms;
+    ms++;
+    str++;
+  }
+  // *str = *ms;
+
+  enable_syscalls();
+  *(unsigned char *)$D643 = $0;
+  asm {nop }
+
+  // return the value of the function
+  return os_version_return;
+}

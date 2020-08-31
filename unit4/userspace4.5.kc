@@ -1,0 +1,16 @@
+import "myabi"
+
+    /**
+ *  Test program that calls your API
+ */
+    void main()
+{
+  // call the new get_os_version() function to get the operating system version
+  print_string("os version: ");
+  char *version = get_os_version();
+  //  use the print_string() API to display a message like: "os version: <operating system version>"
+  print_string(version);
+
+  while (true)
+    continue;
+}
