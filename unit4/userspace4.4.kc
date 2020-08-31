@@ -1,0 +1,13 @@
+import "myabi"
+
+ /**
+ *  Test program that calls your API
+ */
+    void main()
+{
+  char *msg = "printed via print string api";
+  print_string(msg);
+
+  while (true)
+    continue;
+}

@@ -1,3 +1,4 @@
+// --------------- Checkpoint 4.3 ----------------
 /**
  *  Tells the MEGA65 to allow system calls to be made
  */
@@ -25,4 +26,30 @@ void call_syscall01()
   enable_syscalls();
   *(unsigned char *)$D641 = $01;
   asm { nop }
+}
+
+// --------------- Checkpoint 4.4 ----------------
+/**
+ * Implement an API with a function print_string(char *string)
+ * that calls SYSCALL $02 so that it allows a user program to print a string to the screen
+ */
+void print_string(char *string)
+{
+  /*
+   * volatile keyword to ms, so that the KickC compiler knows that their values can change at any time
+   * located somewhere in the range $0300 – $03FF, as nothing else uses this space
+  */
+  volatile unsigned char *ms = (unsigned char *)$0300;
+  // set value to the specific address
+  while (*string)
+  {
+    *ms = *string;
+    ms++;
+    string++;
+  }
+  *ms = $00;
+
+  enable_syscalls();
+  *(unsigned char *)$D642 = $0;
+  asm {nop }
 }
