@@ -1,0 +1,216 @@
+// XMega65 Kernal Development Template
+// Each function of the kernal is a no-args function
+// The functions are placed in the SYSCALLS table surrounded by JMP and NOP
+import "string"
+
+// Use a linker definition file (put the previous listing into that file)
+#pragma link("mega65hyper.ld")
+
+    // Some definitions of addresses and special values that this program uses
+    const char * RASTER = 0xd012;
+const char *VIC_MEMORY = 0xd018;
+const char *SCREEN = 0x0400;
+const char *BGCOL = 0xd021;
+const char *COLS = 0xd800;
+const char BLACK = 0;
+const char WHITE = 1;
+
+// Some text to display
+char[] MESSAGE = "comp9812 operating systems ge";
+char[] MESSAGE_2 = "loading...";
+
+void display_2(unsigned int y_coordinate, unsigned int x_coordinate, char color, char *s)
+{
+    // **************************** Line 5 ******************************
+    *(SCREEN + ((y_coordinate - 8) * 40 + (x_coordinate - 3))) = $43;
+    *(COLS + ((y_coordinate - 8) * 40 + (x_coordinate - 3))) = color;
+
+    *(SCREEN + ((y_coordinate - 8) * 40 + (x_coordinate - 2))) = $43;
+    *(COLS + ((y_coordinate - 8) * 40 + (x_coordinate - 2))) = color;
+
+    *(SCREEN + ((y_coordinate - 8) * 40 + (x_coordinate - 1))) = $43;
+    *(COLS + ((y_coordinate - 8) * 40 + (x_coordinate - 1))) = color;
+
+    *(SCREEN + ((y_coordinate - 8) * 40 + x_coordinate)) = $57;
+    *(COLS + ((y_coordinate - 8) * 40 + x_coordinate)) = color;
+}
+
+void main()
+{
+    // Initialize screen memory, and select correct font
+    *VIC_MEMORY = 0x14;
+    // Fill the screen with spaces
+    memset(SCREEN, ' ', 40 * 25);
+    // Set the colour of every character on the screen to white
+    memset(COLS, WHITE, 40 * 25);
+
+    // Initialize coordinate for symbols
+    int x = 20, y = 13, x_coordinate = 10, y_coordinate = 16;
+    // Display it one line down on the screen
+    char *sc = SCREEN + 40 * 2 + x_coordinate - 5;
+    // The message to display
+    char *msg = MESSAGE;
+    char *msg_3 = MESSAGE_2;
+    char *sc2 = SCREEN;
+    char *sc3 = SCREEN + 40 * (y_coordinate + 2) + x_coordinate+5;
+
+    // Define the colors for displaying
+    char[] colors = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    // Initialize the random color
+    char r_color = colors[1] - 1;
+
+    // A simple copy routine to copy the string
+    while (*msg)
+    {
+        // Display the content of the message verbatim
+        *sc++ = *msg++;
+        my_sleep(100000);
+    }
+
+    while (true)
+    {
+
+        for (int k = 1; k < sizeof(colors); k++)
+        {
+
+            while (*msg_3)
+            {
+                *sc3++ = *msg_3++;
+            }
+            my_sleep(100000);
+
+            for (int z = 0; z < 20; z++)
+            {
+                *(SCREEN + ((y_coordinate)*40 + (x_coordinate + z))) = $2f;
+                *(COLS + ((y_coordinate)*40 + (x_coordinate + z))) = r_color;
+                my_sleep(100000);
+                *(SCREEN + ((y_coordinate)*40 + (x_coordinate + z))) = $2a;
+                *(COLS + ((y_coordinate)*40 + (x_coordinate + z)) - 1) = r_color;
+            }
+            r_color++;
+        }
+
+        // for (int k = 1; k < sizeof(colors); k++)
+        // {
+
+        // r_color++;
+
+        // Clear and initialize the message to display
+        // sc = SCREEN + 40;
+        // msg = MESSAGE;
+        // **************************** Line 1 ******************************
+        // while (*msg)
+        // {
+        //     *sc++ = *msg++;
+        //     // Set the colour of every character on the screen
+        //     memset(COLS, r_color, 40 * 2);
+        // }
+
+        // *(SCREEN + ((y_coordinate - 8) * 40 + (x_coordinate - 3))) = $43;
+        // *(COLS + ((y_coordinate - 8) * 40 + (x_coordinate - 3))) = r_color;
+
+        // *(SCREEN + ((y_coordinate - 8) * 40 + (x_coordinate - 2))) = $43;
+        // *(COLS + ((y_coordinate - 8) * 40 + (x_coordinate - 2))) = r_color;
+
+        // *(SCREEN + ((y_coordinate - 8) * 40 + (x_coordinate - 1))) = $43;
+        // *(COLS + ((y_coordinate - 8) * 40 + (x_coordinate - 1))) = r_color;
+
+        // *(SCREEN + ((y_coordinate - 8) * 40 + x_coordinate)) = $57;
+        // *(COLS + ((y_coordinate - 8) * 40 + x_coordinate)) = r_color;
+
+        // **************************** Line 11 ******************************
+        // Draw the first underline with random color on the (17, 11) latitude
+        // *(SCREEN + ((y - 2) * 40 + x - 3)) = $64;
+        // *(COLS + ((y - 2) * 40 + x - 3)) = r_color;
+
+        // Draw the head with random color on the (18, 11) latitude
+        // *(SCREEN + ((y - 2) * 40 + x - 2)) = $57;
+        // *(COLS + ((y - 2) * 40 + x - 2)) = r_color;
+
+        // Draw the second underline with random color on the (19, 11) latitude
+        // *(SCREEN + ((y - 2) * 40 + x - 1)) = $64;
+        // *(COLS + ((y - 2) * 40 + x - 1)) = r_color;
+
+        // **************************** Line 12 ******************************
+        // Draw the left arm with random color on the (17, 12) latitude
+        // *(SCREEN + ((y - 1) * 40 + x - 3)) = $54;
+        // *(COLS + ((y - 1) * 40 + x - 3)) = r_color;
+
+        // Draw a body(heart) with random color in the middle of the screen
+        // *(SCREEN + ((y - 1) * 40 + x - 2)) = $53;
+        // *(COLS + ((y - 1) * 40 + x - 2)) = r_color;
+
+        // Draw the right arm with random color on the (19, 12) latitude
+        // *(SCREEN + ((y - 1) * 40 + x - 1)) = $59;
+        // *(COLS + ((y - 1) * 40 + x - 1)) = r_color;
+
+        // **************************** Line 13 ******************************
+        // Draw a body(legs) with random color in the middle of the screen
+        // *(SCREEN + ((y)*40 + x - 2)) = $42;
+        // *(COLS + ((y)*40 + x - 2)) = r_color;
+
+        // **************************** Line 14 ******************************
+        // Draw the left foot with random color on the (17, 14) latitude
+        // *(SCREEN + ((y + 1) * 40 + x - 3)) = $64;
+        // *(COLS + ((y + 1) * 40 + x - 3)) = r_color;
+
+        // Draw the right foot with random color on the (19, 14) latitude
+        // *(SCREEN + ((y + 1) * 40 + x - 1)) = $64;
+        // *(COLS + ((y + 1) * 40 + x - 1)) = r_color;
+        // }
+    }
+
+    // display_2(y_coordinate, x_coordinate, r_color, sc2);
+}
+
+/**
+ *  Custom timing function
+ */
+void my_sleep(unsigned long time)
+{
+    for (unsigned long i = 0; i < time; i++)
+    {
+    }
+}
+
+// Here are a couple sample SYSCALL handlers that just display a character on the screen
+void syscall1()
+{
+    exit_hypervisor();
+}
+
+// Now we select the SYSCALL segment to hold the SYSCALL/trap entry point table.
+#pragma data_seg(Syscall)
+
+// The structure of each entry point is JMP <handler address> + NOP.Syscall
+// We have a char (xjmp) to hold the opcode for the JMP instruction,
+// and then put the address of the SYSCALL/trap handler in the next
+// two points as a pointer, and end with the NOP instruction opcode.
+struct SysCall
+{
+    char xjmp;        // Holds $4C, the JMP $nnnn opcode
+    void() * syscall; // Holds handler address, will be the target of the JMP
+    char xnop;        // Holds $EA, the NOP opcode
+};
+
+// To save writing 0x4C and 0xEA all the time, we define them as constants
+const char JMP = 0x4c;
+const char NOP = 0xea;
+
+// Now we can have a nice table of up to 64 SYSCALL handlers expressed
+// in a fairly readable and easy format.
+// Each line is an instance of the struct SysCall from above, with the JMP
+// opcode value, the address of the handler routine and the NOP opcode value.
+export struct SysCall[] SYSCALLS = {
+    {JMP, &syscall1, NOP}};
+// In this example we had only two SYSCALLs defined, so rather than having
+// another 62 lines, we can just ask KickC to make the TRAP table begin
+// at the next multiple of $100, i.e., at $8100.
+export align(0x100) struct SysCall[] SYSCALL_RESET = {
+    {JMP, &main, NOP}};
+
+void exit_hypervisor()
+{
+    // Trigger exit from Hypervisor mode
+    *(unsigned char *)$D67F = $01;
+}
