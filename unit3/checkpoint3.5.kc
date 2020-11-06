@@ -1,0 +1,1341 @@
+import "string"
+
+#pragma link("mega65hyper.ld")
+
+const char* RASTER = 0xd012;
+
+const char* VIC_MEMORY = 0xd018;
+
+const char* SCREEN = 0x0400;
+
+const char* BGCOL = 0xd021;
+
+const char* COLS = 0xd800;
+
+const char BLACK = 0;
+
+const char WHITE = 1;
+
+const char* DEVICE_START=0xd000;
+
+const char* DEVICE_SKIP=0xd800;
+
+const char[] MOS6526 = "mos";
+
+const char[] VICII = "vic"; 
+
+const char[] NON = "nil";
+
+
+
+
+
+char[] MESSAGE = " checkpoint 3.1 by gu0266";
+
+unsigned char *current_screen_line = $0400;
+
+unsigned char current_screen_x = 0;
+
+unsigned short men_start = $0800;
+
+unsigned short men_end = $0800;
+
+// Device allocation structure
+
+struct device_memory_allocation{
+
+       unsigned short first_address;
+
+       unsigned short last_address;
+
+       char[] device_name;
+
+       };
+
+//Device allocations array
+
+struct device_memory_allocation[16] device_memory_allocations={
+
+ {0,0,NON},{0,0,NON},{0,0,NON},{0,0,NON},{0,0,NON},{0,0,NON},
+
+{0,0,NON},{0,0,NON},{0,0,NON},{0,0,NON},{0,0,NON},{0,0,NON},
+
+{0,0,NON},{0,0,NON},{0,0,NON},{0,0,NON}
+
+};
+
+//define counts
+
+unsigned char counts = 0;
+
+//define allocation count
+
+unsigned char device_allocation_counts = 0;
+
+
+
+void main(){
+
+}
+
+
+
+
+
+
+
+//probing memory
+
+
+
+void test_memory(){
+
+
+
+char *sc = men_start;
+
+char chara=$00;
+
+volatile unsigned char *p;
+
+unsigned short err=0;
+
+for (int i=0;i<30720;i++){
+
+p=sc;
+
+chara=$00;
+
+for (int j=0;j<255;j++){
+
+*p=chara;
+
+if (*p!=chara){
+
+   print_to_screen("the memory error at $");
+
+   print_hex((unsigned short)p);
+
+   print_newline();
+
+   err=1;
+
+   break;
+
+}
+
+chara++;
+
+}
+
+if (err==1) {
+
+if(men_end!=$0800) men_end-=1;
+
+break;
+
+}
+
+sc++;
+
+men_end=(unsigned short)sc;
+
+}
+
+   print_to_screen("memory found at $");
+
+   print_hex(men_start);
+
+   print_to_screen("- $");
+
+   print_hex(men_end);
+
+   print_newline();
+
+
+
+}
+
+//detect_devices
+
+
+
+void detect_devices(){
+
+unsigned short address;
+
+unsigned short result=$0;
+
+unsigned short count = 0;
+
+for (unsigned short i=$01;i<$ff1;i+=$10){
+
+{
+
+    unsigned char* num = DEVICE_START-1;
+
+    for (unsigned short j=$00;j<i;j++){
+
+        num++;
+
+        }//print pointer position
+
+{
+
+
+
+    struct device_memory_allocation *dn;
+
+    for (dn = &device_memory_allocations[0];dn<&device_memory_allocations[0]+counts;dn++){
+
+    
+
+        
+
+        unsigned short temp_f = dn->first_address;
+
+        unsigned short temp_l = dn->last_address;
+
+        unsigned short temp_n = (unsigned short) num;
+
+        if (temp_n >= temp_f && temp_n <= temp_l) {
+
+           i+=temp_l-temp_n+$1-$10;
+
+             
+
+        }
+
+    }
+
+
+
+}//decide whether avoid present memory address
+
+    address=(unsigned short)i;
+
+    result=$0;
+
+    result=detect_vicii(address);
+
+    if (result!=$0){
+
+       count=count+1;
+
+    }
+
+    i+=result;
+
+
+
+
+
+    print_hex((unsigned short)num);
+
+    current_screen_x = 0;
+
+}
+
+
+
+    result=$0;
+
+    result=detect_mos6526(address);
+
+    if (result!=$0){
+
+       count=count+1;
+
+    }
+
+    i+=result;
+
+}
+
+
+
+if (count==0){
+
+   print_to_screen("no device found");
+
+   print_newline();
+
+}
+
+ {
+
+    struct device_memory_allocation *dn;
+
+    for (dn = &device_memory_allocations[0];dn<&device_memory_allocations[0]+counts;dn++){
+
+    
+
+        
+
+        unsigned short temp_f = dn->first_address;
+
+        unsigned short temp_l = dn->last_address;
+
+        char[] name = dn->device_name;
+
+        print_to_screen(name);
+
+        print_to_screen(" at ");
+
+        print_hex(temp_f);
+
+        print_to_screen(" to ");
+
+        print_hex(temp_l);
+
+        print_newline();
+
+       
+
+    }
+
+
+
+ } //print allocation structure
+
+print_to_screen("finished probing for devices");
+
+print_newline();
+
+}
+
+
+
+
+
+//mos6526 memory allocation
+
+void mos_allocation(char *p){   
+
+       device_memory_allocations[counts].device_name = MOS6526;    
+
+       device_memory_allocations[counts].first_address = (unsigned short)p;
+
+       p+=$FF;
+
+       device_memory_allocations[counts].last_address = (unsigned short)p;
+
+       counts+=1;
+
+     
+
+}
+
+
+
+//vicii memory allocation
+
+void vicii_allocation(char *p){
+
+       device_memory_allocations[counts].device_name = VICII;    
+
+       device_memory_allocations[counts].first_address = (unsigned short)p;
+
+       device_memory_allocations[counts].last_address = (unsigned short)(p+$7f);
+
+       counts+=1;
+
+       device_memory_allocations[counts].device_name = VICII;    
+
+       device_memory_allocations[counts].first_address = (unsigned short)(p+$100);
+
+       device_memory_allocations[counts].last_address = (unsigned short)(p+$3ff);
+
+       counts+=1;
+
+       device_memory_allocations[counts].device_name = VICII;    
+
+       device_memory_allocations[counts].first_address = (unsigned short)(p+$800);
+
+       device_memory_allocations[counts].last_address = (unsigned short)(p+$bff);
+
+       counts+=1;      
+
+
+
+}
+
+
+
+// detect mos6526
+
+unsigned short detect_mos6526(unsigned short address){
+
+volatile unsigned char* p;
+
+unsigned char v1,v2;
+
+p=DEVICE_START-1;
+
+for (unsigned short j=0;j<address;j++){
+
+    p++;
+
+}
+
+unsigned long i;
+
+if (p[$0b]<$01||p[$0b]>$23) {return $0;}
+
+else {
+
+   v1=p[$09];
+
+   for (i=1;i<4000000;i++) {
+
+
+
+           v2=p[$09];
+
+           if (v1!=v2){
+
+              print_to_screen("found mos6526 ");
+
+              print_newline();
+
+              mos_allocation(p);
+
+              return $f0;
+
+           
+
+       }  
+
+       
+
+       }
+
+   
+
+
+
+   }
+
+   return $0;
+
+}
+
+
+
+
+
+
+
+// detect vicii
+
+unsigned short detect_vicii(unsigned short address){
+
+volatile unsigned char* p;
+
+unsigned char v1,v2;
+
+p=DEVICE_START-1;
+
+for (unsigned short j=0;j<address;j++){
+
+    p++;
+
+}
+
+unsigned short i;
+
+v1=p[$12];
+
+for (i=1;i<1000;i++) continue;
+
+v2=p[$12];
+
+if (v1<v2){
+
+   print_to_screen("found vic-ii");
+
+   vicii_allocation(p);
+
+   print_newline();
+
+   return $70;
+
+} else if (v1>v2) {
+
+   v1=p[$12];
+
+   for (i=1;i<1000;i++) continue;
+
+   v2=p[$12];
+
+   if (v1<v2){
+
+      print_to_screen("found vic-ii");
+
+      print_newline();
+
+      vicii_allocation(p);
+
+      return $70;
+
+      }else {return $0;}
+
+   } else {return $0;}
+
+}
+
+
+
+// print hex
+
+void print_hex(unsigned short value){
+
+char[5] hex;
+
+unsigned char i;
+
+for (i=0;i<4;i++){
+
+  if (value<0xa000) hex[i]='0'+(char)(value>>12);
+
+  else hex[i]=(char)(value>>12)-9;
+
+  value<<=4;
+
+}
+
+
+
+hex[4]=0;
+
+print_to_screen(hex);
+
+
+
+}
+
+
+
+void exit_hypervisor(){
+
+   *(unsigned char *)$D67F = $01;
+
+}
+
+
+
+void print_to_screen(char *message) {
+
+  char* sc =current_screen_line+current_screen_x;
+
+  char* msg = message;
+
+  while(*msg){
+
+    *sc++=*msg++;
+
+  current_screen_x ++;
+
+  }
+
+  while(current_screen_x>=40){
+
+     current_screen_x-=40;
+
+     current_screen_line +=1;
+
+}
+
+
+
+}
+
+
+
+void print_newline(){
+
+current_screen_line+=40;
+
+current_screen_x = 0;
+
+
+
+while(current_screen_line>=(SCREEN+40*25)){
+
+clean();
+
+current_screen_line-=25;
+
+}
+
+
+
+}
+
+
+
+//clean
+
+void clean(){
+
+  memset(SCREEN,' ',40*25);
+
+  memset(COLS,WHITE,40*25);
+
+}
+
+
+
+void syscall1(){
+
+  *(SCREEN+79) = ')';
+
+exit_hypervisor();
+
+}
+
+
+
+void syscall2() {
+
+  *(SCREEN+78)='(';
+
+exit_hypervisor();
+
+}
+
+
+
+void syscall3() {
+
+exit_hypervisor();}
+
+
+
+void syscall4() {
+
+exit_hypervisor();}
+
+
+
+void syscall5() {
+
+exit_hypervisor();}
+
+
+
+void syscall6() {
+
+exit_hypervisor();}
+
+
+
+void syscall7() {
+
+exit_hypervisor();}
+
+
+
+void syscall8() {
+
+exit_hypervisor();}
+
+
+
+void syscall9() {
+
+exit_hypervisor();}
+
+
+
+
+
+
+
+void syscall10() {
+
+exit_hypervisor();}
+
+
+
+void syscall11() {
+
+exit_hypervisor();}
+
+
+
+void syscall12() {
+
+exit_hypervisor();}
+
+
+
+void syscall13() {
+
+exit_hypervisor();}
+
+
+
+void syscall14() {
+
+exit_hypervisor();}
+
+
+
+void syscall15() {
+
+exit_hypervisor();}
+
+
+
+void syscall16() {
+
+exit_hypervisor();}
+
+
+
+void SECURENTR() {
+
+exit_hypervisor();}
+
+
+
+void SECUREXIT() {
+
+exit_hypervisor();}
+
+
+
+void syscall19() {
+
+exit_hypervisor();}
+
+
+
+
+
+void syscall20() {
+
+exit_hypervisor();}
+
+
+
+void syscall21() {
+
+exit_hypervisor();}
+
+
+
+void syscall22() {
+
+exit_hypervisor();}
+
+
+
+void syscall23() {
+
+exit_hypervisor();}
+
+
+
+void syscall24() {
+
+exit_hypervisor();}
+
+
+
+void syscall25() {
+
+exit_hypervisor();}
+
+
+
+void syscall26() {
+
+exit_hypervisor();}
+
+
+
+void syscall27() {
+
+exit_hypervisor();}
+
+
+
+void syscall28() {
+
+exit_hypervisor();}
+
+
+
+void syscall29() {
+
+exit_hypervisor();}
+
+
+
+
+
+void syscall30() {
+
+exit_hypervisor();}
+
+
+
+void syscall31() {
+
+exit_hypervisor();}
+
+
+
+void syscall32() {
+
+exit_hypervisor();}
+
+
+
+void syscall33() {
+
+exit_hypervisor();}
+
+
+
+void syscall34() {
+
+exit_hypervisor();}
+
+
+
+void syscall35() {
+
+exit_hypervisor();}
+
+
+
+void syscall36() {
+
+exit_hypervisor();}
+
+
+
+void syscall37() {
+
+exit_hypervisor();}
+
+
+
+void syscall38() {
+
+exit_hypervisor();}
+
+
+
+void syscall39() {
+
+exit_hypervisor();}
+
+
+
+
+
+void syscall40() {
+
+exit_hypervisor();}
+
+
+
+void syscall41() {
+
+exit_hypervisor();}
+
+
+
+void syscall42() {
+
+exit_hypervisor();}
+
+
+
+void syscall43() {
+
+exit_hypervisor();}
+
+
+
+void syscall44() {
+
+exit_hypervisor();}
+
+
+
+void syscall45() {
+
+exit_hypervisor();}
+
+
+
+void syscall46() {
+
+exit_hypervisor();}
+
+
+
+void syscall47() {
+
+exit_hypervisor();}
+
+
+
+void syscall48() {
+
+exit_hypervisor();}
+
+
+
+void syscall49() {
+
+exit_hypervisor();}
+
+
+
+
+
+void syscall50() {
+
+exit_hypervisor();}
+
+
+
+void syscall51() {
+
+exit_hypervisor();}
+
+
+
+void syscall52() {
+
+exit_hypervisor();}
+
+
+
+void syscall53() {
+
+exit_hypervisor();}
+
+
+
+void syscall54() {
+
+exit_hypervisor();}
+
+
+
+void syscall55() {
+
+exit_hypervisor();}
+
+
+
+void syscall56() {
+
+exit_hypervisor();}
+
+
+
+void syscall57() {
+
+exit_hypervisor();}
+
+
+
+void syscall58() {
+
+exit_hypervisor();}
+
+
+
+void syscall59() {
+
+exit_hypervisor();}
+
+
+
+
+
+void syscall60() {
+
+exit_hypervisor();}
+
+
+
+void syscall61() {
+
+exit_hypervisor();}
+
+
+
+void syscall62() {
+
+exit_hypervisor();}
+
+
+
+void syscall63() {
+
+exit_hypervisor();}
+
+
+
+void syscall64() {
+
+exit_hypervisor();}
+
+
+
+void RESET() {
+
+
+
+  *VIC_MEMORY = 0x14;
+
+  memset(SCREEN,' ',40*25);
+
+  memset(COLS,WHITE,40*25);
+
+  char* sc =SCREEN+40;
+
+  char* msg = MESSAGE;
+
+  char[] message1 = "ling0131 operating system starting...";
+
+  char[] message2 = "testing hardware";
+
+  print_to_screen(&message1[0]);
+
+  print_newline();
+
+  print_to_screen(&message2[0]); 
+
+  print_newline();
+
+  for (unsigned short k=0;k<16;k++){
+
+          device_memory_allocations[k].first_address = $0;
+
+          device_memory_allocations[k].last_address = $0;
+
+          device_memory_allocations[k].device_name[0] = 0;
+
+          }
+
+  detect_devices();
+
+
+
+exit_hypervisor();}
+
+
+
+void PAGFAULT() {
+
+exit_hypervisor();}
+
+
+
+void RESTORKEY() {
+
+exit_hypervisor();}
+
+
+
+void ALTTABKEY() {
+
+exit_hypervisor();}
+
+
+
+void VF011RD() {
+
+exit_hypervisor();}
+
+
+
+void VF011WR() {
+
+exit_hypervisor();}
+
+
+
+void undefined_trap() {
+
+exit_hypervisor();}
+
+
+
+void CPUKIL() {
+
+exit_hypervisor();}
+
+
+
+
+
+#pragma data_seg(Syscall)
+
+
+
+struct SysCall {
+
+   char xjmp;
+
+   void()* syscall;
+
+   char xnop;
+
+};
+
+
+
+const char JMP = 0x4c;
+
+const char NOP = 0xea;
+
+
+
+export struct SysCall[] SYSCALLS = {
+
+{ JMP, &syscall1, NOP },
+
+{ JMP, &syscall2, NOP },
+
+{ JMP, &syscall3, NOP },
+
+{ JMP, &syscall4, NOP },
+
+{ JMP, &syscall5, NOP },
+
+{ JMP, &syscall6, NOP },
+
+{ JMP, &syscall7, NOP },
+
+{ JMP, &syscall8, NOP },
+
+{ JMP, &syscall9, NOP },
+
+{ JMP, &syscall10, NOP },
+
+{ JMP, &syscall11, NOP },
+
+{ JMP, &syscall12, NOP },
+
+{ JMP, &syscall13, NOP },
+
+{ JMP, &syscall14, NOP },
+
+{ JMP, &syscall15, NOP },
+
+{ JMP, &syscall16, NOP },
+
+{ JMP, &SECURENTR, NOP },
+
+{ JMP, &SECUREXIT, NOP },
+
+{ JMP, &syscall19, NOP },
+
+{ JMP, &syscall20, NOP },
+
+{ JMP, &syscall21, NOP },
+
+{ JMP, &syscall22, NOP },
+
+{ JMP, &syscall23, NOP },
+
+{ JMP, &syscall24, NOP },
+
+{ JMP, &syscall25, NOP },
+
+{ JMP, &syscall26, NOP },
+
+{ JMP, &syscall27, NOP },
+
+{ JMP, &syscall28, NOP },
+
+{ JMP, &syscall29, NOP },
+
+{ JMP, &syscall30, NOP },
+
+{ JMP, &syscall31, NOP },
+
+{ JMP, &syscall32, NOP },
+
+{ JMP, &syscall33, NOP },
+
+{ JMP, &syscall34, NOP },
+
+{ JMP, &syscall35, NOP },
+
+{ JMP, &syscall36, NOP },
+
+{ JMP, &syscall37, NOP },
+
+{ JMP, &syscall38, NOP },
+
+{ JMP, &syscall39, NOP },
+
+{ JMP, &syscall40, NOP },
+
+{ JMP, &syscall41, NOP },
+
+{ JMP, &syscall42, NOP },
+
+{ JMP, &syscall43, NOP },
+
+{ JMP, &syscall44, NOP },
+
+{ JMP, &syscall45, NOP },
+
+{ JMP, &syscall46, NOP },
+
+{ JMP, &syscall47, NOP },
+
+{ JMP, &syscall48, NOP },
+
+{ JMP, &syscall49, NOP },
+
+{ JMP, &syscall50, NOP },
+
+{ JMP, &syscall51, NOP },
+
+{ JMP, &syscall52, NOP },
+
+{ JMP, &syscall53, NOP },
+
+{ JMP, &syscall54, NOP },
+
+{ JMP, &syscall55, NOP },
+
+{ JMP, &syscall56, NOP },
+
+{ JMP, &syscall57, NOP },
+
+{ JMP, &syscall58, NOP },
+
+{ JMP, &syscall59, NOP },
+
+{ JMP, &syscall60, NOP },
+
+{ JMP, &syscall61, NOP },
+
+{ JMP, &syscall62, NOP },
+
+{ JMP, &syscall63, NOP },
+
+{ JMP, &syscall64, NOP }
+
+};
+
+export align(0x100) struct SysCall[] TRAPS = {
+
+
+
+
+
+{ JMP, &RESET, NOP },
+
+{ JMP, &PAGFAULT, NOP },
+
+{ JMP, &RESTORKEY, NOP },
+
+{ JMP, &ALTTABKEY, NOP },
+
+{ JMP, &VF011RD, NOP },
+
+{ JMP, &VF011WR, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &undefined_trap, NOP },
+
+{ JMP, &CPUKIL, NOP }
+
+};
